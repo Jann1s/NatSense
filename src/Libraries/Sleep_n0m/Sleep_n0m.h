@@ -80,13 +80,6 @@ Sleep();
 	void pwrSaveMode() {setSleepMode(SLEEP_MODE_PWR_SAVE);}
 
 	//------------------------------------------------------
-	// Description: sets the Arduino into extStandby Mode sleep,
-	// This mode is identical to Power-save with the exception
-	// that the Oscillator is kept running for fast wake up
-	//------------------------------------------------------
-	void extStandbyMode(){setSleepMode(SLEEP_MODE_EXT_STANDBY);}
-
-	//------------------------------------------------------
 	// Description: sets the Arduino into standby Mode sleep,
 	// This mode is identical to Power-down with the exception
 	// that the Oscillator is kept running for fast wake up

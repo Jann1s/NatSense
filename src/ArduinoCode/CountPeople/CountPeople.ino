@@ -1,27 +1,31 @@
+#include <Sleep_n0m.h>
 #include <EEPROM.h>
 #include <FreqMeasure.h>
 
-#define ANALOG_IN 0
+#define intPin 2      //WakeUp pin
+#define ANALOG_IN 0   //Radar pin
 double sum;
 int count;
 int walker;
 int cyclist;
 boolean samePerson;
+long seconds;
+float avgSpeed;
+int countOfDetection;
+
+Sleep sleep;
 
 void setup() {
     Serial.begin(9600);
     FreqMeasure.begin();
 
-    sum, count, walker, cyclist = 0;
+    sum, count, walker, cyclist, seconds, avgSpeed, countOfDetection = 0;
 
-    
+    seconds = millis();
 }
 
 void loop() {
-    //TODO: add timer for going to sleep
-    //TODO: add timer for idle radar
 
-    
     if (FreqMeasure.available() > 0) 
     {
         // average several reading together
@@ -37,7 +41,7 @@ void loop() {
 
             //Checking if a person is detected by the radar
             CheckObject(speed);
-
+            
             //Output the result
             OutputResults(speed);
 
@@ -52,7 +56,18 @@ void loop() {
 }
 
 void CheckObject(float speed) {
+
+    //bool test = false;
+
+    CheckTimer();
+    if (speed >= 0.5f) {
+        seconds = millis();
+       // avgSpeed += speed;
+        //countOfDetection++;
+    }
+  /*
     if (speed >= 0.5f && !samePerson) {
+
         if (speed < 6)
             walker++;
         else if (speed >= 6)
@@ -62,6 +77,17 @@ void CheckObject(float speed) {
     }
     else if (speed < 0.5f) {
         samePerson = false;
+    }
+*/
+    if (!samePerson) {
+        avgSpeed = avgSpeed / countOfDetection;
+      
+        if (avgSpeed > 1 && avgSpeed < 6) {
+            walker++;
+        }
+        else if (avgSpeed >= 6) {
+            cyclist++;
+        }
     }
 }
 
@@ -76,6 +102,18 @@ void OutputResults(float nspeed) {
 }
 
 void ActivateDeepSleep() {
+    sleep.pwrDownMode();
+    sleep.sleepPinInterrupt(intPin,HIGH);
+}
+
+void CheckTimer() {
+
+  long tmpSecs = millis();
   
+
+  if (tmpSecs > (seconds + (10 * 1000)))
+      ActivateDeepSleep();
+  else if (tmpSecs > (seconds + (0.5 * 1000)))
+      samePerson = false;
 }
 
