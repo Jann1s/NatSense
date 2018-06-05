@@ -12,6 +12,7 @@ boolean samePerson;
 long seconds;
 float avgSpeed;
 int countOfDetection;
+boolean detectionEnd;
 
 Sleep sleep;
 
@@ -20,8 +21,12 @@ void setup() {
     FreqMeasure.begin();
 
     sum, count, walker, cyclist, seconds, avgSpeed, countOfDetection = 0;
+    detectionEnd, samePerson = false;
 
     seconds = millis();
+
+    EEPROM.get(0, walker);
+    EEPROM.get(1, cyclist);
 }
 
 void loop() {
@@ -41,59 +46,53 @@ void loop() {
 
             //Checking if a person is detected by the radar
             CheckObject(speed);
-            
-            //Output the result
-            OutputResults(speed);
 
             //reset speed to 0
             speed = 0;
-            
-            EEPROM.put(0, walker);
-            EEPROM.put(1, cyclist);
-            
         }
     }
+
+    CheckTimer();
 }
 
 void CheckObject(float speed) {
 
     //bool test = false;
 
-    CheckTimer();
-    if (speed >= 0.5f) {
+    //CheckTimer();
+    
+    if (speed >= 0.5f && samePerson) {
         seconds = millis();
-       // avgSpeed += speed;
-        //countOfDetection++;
+        avgSpeed += speed;
+        countOfDetection++;
     }
-  /*
-    if (speed >= 0.5f && !samePerson) {
-
-        if (speed < 6)
-            walker++;
-        else if (speed >= 6)
-            cyclist++;
-
-        samePerson = true;
-    }
-    else if (speed < 0.5f) {
-        samePerson = false;
-    }
-*/
-    if (!samePerson) {
+  
+    if (!samePerson && avgSpeed > 0) {
         avgSpeed = avgSpeed / countOfDetection;
-      
+        
         if (avgSpeed > 1 && avgSpeed < 6) {
             walker++;
         }
         else if (avgSpeed >= 6) {
             cyclist++;
         }
+
+        OutputResults(avgSpeed);
+
+        avgSpeed = 0;
+        countOfDetection = 0;
+    }
+    
+    if (!samePerson && speed > 0.5f) {
+        samePerson = true;
+        seconds = millis();
     }
 }
 
 void OutputResults(float nspeed) {
     Serial.print("Speed: ");
-    Serial.println(nspeed);
+    Serial.print(nspeed);
+    Serial.println(" km/h");
     Serial.print("Walker: ");
     Serial.println(walker);
     Serial.print("Cyclist: ");
@@ -102,8 +101,8 @@ void OutputResults(float nspeed) {
 }
 
 void ActivateDeepSleep() {
-    sleep.pwrDownMode();
-    sleep.sleepPinInterrupt(intPin,HIGH);
+    //sleep.pwrDownMode();
+    //sleep.sleepPinInterrupt(intPin,HIGH);
 }
 
 void CheckTimer() {
@@ -115,5 +114,39 @@ void CheckTimer() {
       ActivateDeepSleep();
   else if (tmpSecs > (seconds + (0.5 * 1000)))
       samePerson = false;
+
+  if (!samePerson && avgSpeed > 0)
+      DeterminePerson();
+}
+
+void DeterminePerson() {
+    avgSpeed = avgSpeed / countOfDetection;
+        
+    if (avgSpeed > 1 && avgSpeed < 6) {
+        walker++;
+    }
+    else if (avgSpeed >= 6) {
+        cyclist++;
+    }
+
+    OutputResults(avgSpeed);
+
+    avgSpeed = 0;
+    countOfDetection = 0;
+
+    EEPROM.put(0, walker);
+    EEPROM.put(1, cyclist);
+}
+
+void SendData() {
+    //This is the method for sending all of the data
+
+    //After sending, clear eeprom data
+    EEPROM.put(0, 0);
+    EEPROM.put(1, 0);
+}
+
+void GetBatteryStatus() {
+    //This is the method for getting the battery status
 }
 
