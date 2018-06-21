@@ -17,7 +17,7 @@ boolean detectionEnd;
 Sleep sleep;
 
 void setup() {
-    Serial.begin(9600);
+    Serial.begin(115200);
     FreqMeasure.begin();
 
     sum, count, walker, cyclist, seconds, avgSpeed, countOfDetection = 0;
@@ -25,8 +25,8 @@ void setup() {
 
     seconds = millis();
 
-    EEPROM.get(0, walker);
-    EEPROM.get(1, cyclist);
+    //EEPROM.get(0, walker);
+    //EEPROM.get(1, cyclist);
 }
 
 void loop() {
@@ -90,14 +90,16 @@ void CheckObject(float speed) {
 }
 
 void OutputResults(float nspeed) {
-    Serial.print("Speed: ");
-    Serial.print(nspeed);
-    Serial.println(" km/h");
-    Serial.print("Walker: ");
-    Serial.println(walker);
-    Serial.print("Cyclist: ");
-    Serial.println(cyclist);
-    Serial.println();
+
+  Serial.println((String)nspeed + ';' + (String)walker + ';' + (String)cyclist);
+    //Serial.print("Speed: ");
+    //Serial.print(nspeed);
+    //Serial.println(" km/h");
+    //Serial.print("Walker: ");
+    //Serial.println(walker);
+    //Serial.print("Cyclist: ");
+    //Serial.println(cyclist);
+    //Serial.println();
 }
 
 void ActivateDeepSleep() {
@@ -122,10 +124,10 @@ void CheckTimer() {
 void DeterminePerson() {
     avgSpeed = avgSpeed / countOfDetection;
         
-    if (avgSpeed > 1 && avgSpeed < 6) {
+    if (avgSpeed > 1 && avgSpeed < 10) {
         walker++;
     }
-    else if (avgSpeed >= 6) {
+    else if (avgSpeed >= 10) {
         cyclist++;
     }
 
