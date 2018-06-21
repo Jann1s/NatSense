@@ -6,8 +6,8 @@
 #define ANALOG_IN 0   //Radar pin
 double sum;
 int count;
-int walker;
-int cyclist;
+int walker = 0;
+int cyclist = 0;
 boolean samePerson;
 long seconds;
 float avgSpeed;
@@ -57,10 +57,6 @@ void loop() {
 
 void CheckObject(float speed) {
 
-    //bool test = false;
-
-    //CheckTimer();
-    
     if (speed >= 0.5f && samePerson) {
         seconds = millis();
         avgSpeed += speed;
@@ -91,7 +87,10 @@ void CheckObject(float speed) {
 
 void OutputResults(float nspeed) {
 
-  Serial.println((String)nspeed + ';' + (String)walker + ';' + (String)cyclist);
+  for (int i = 0; i < 5; i++) {
+    Serial.println((String)nspeed + ';' + (String)walker + ';' + (String)cyclist);
+  }
+  
     //Serial.print("Speed: ");
     //Serial.print(nspeed);
     //Serial.println(" km/h");
