@@ -20,6 +20,8 @@ void setup() {
     Serial.begin(115200);
     FreqMeasure.begin();
 
+    pinMode(intPin, INPUT);
+
     sum, count, walker, cyclist, seconds, avgSpeed, countOfDetection = 0;
     detectionEnd, samePerson = false;
 
@@ -30,7 +32,7 @@ void setup() {
 }
 
 void loop() {
-
+    
     if (FreqMeasure.available() > 0) 
     {
         // average several reading together
@@ -51,8 +53,10 @@ void loop() {
             speed = 0;
         }
     }
-
+    
     CheckTimer();
+
+    Serial.println(digitalRead(intPin));
 }
 
 void CheckObject(float speed) {
@@ -87,30 +91,35 @@ void CheckObject(float speed) {
 
 void OutputResults(float nspeed) {
 
+  /*
+   * Demonstration output
   for (int i = 0; i < 5; i++) {
     Serial.println((String)nspeed + ';' + (String)walker + ';' + (String)cyclist);
   }
+  */
   
-    //Serial.print("Speed: ");
-    //Serial.print(nspeed);
-    //Serial.println(" km/h");
-    //Serial.print("Walker: ");
-    //Serial.println(walker);
-    //Serial.print("Cyclist: ");
-    //Serial.println(cyclist);
-    //Serial.println();
+  Serial.print("Speed: ");
+  Serial.print(nspeed);
+  Serial.println(" km/h");
+  Serial.print("Walker: ");
+  Serial.println(walker);
+  Serial.print("Cyclist: ");
+  Serial.println(cyclist);
+  Serial.print("PIR: ");
+  Serial.println(digitalRead(intPin));
+  Serial.println();
+  
 }
 
 void ActivateDeepSleep() {
-    //sleep.pwrDownMode();
-    //sleep.sleepPinInterrupt(intPin,HIGH);
+    sleep.pwrDownMode();
+    sleep.sleepPinInterrupt(intPin, HIGH);
 }
 
 void CheckTimer() {
 
   long tmpSecs = millis();
   
-
   if (tmpSecs > (seconds + (10 * 1000)))
       ActivateDeepSleep();
   else if (tmpSecs > (seconds + (0.5 * 1000)))
