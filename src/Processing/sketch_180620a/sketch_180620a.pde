@@ -13,7 +13,7 @@ void setup(){
   size(800,450);
   
   printArray(Serial.list());
-  myPort = new Serial(this, "COM3", 115200);
+  myPort = new Serial(this, "/dev/cu.usbserial-A50285BI", 115200);
   myPort.bufferUntil('\n');
 }
 
