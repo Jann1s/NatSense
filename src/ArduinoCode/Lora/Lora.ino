@@ -37,7 +37,6 @@
 #include <FreqMeasure.h>
 
 #define intPin 2      //WakeUp pin
-#define ANALOG_IN 0   //Radar pin
 double sum;
 int count;
 int walker = 0;
@@ -70,7 +69,7 @@ void os_getArtEui (u1_t* buf) { }
 void os_getDevEui (u1_t* buf) { }
 void os_getDevKey (u1_t* buf) { }
 
-
+//The data which will be send using LoRaWAN
 static uint8_t mydata[] = "0 0";
 
 
@@ -88,6 +87,10 @@ const lmic_pinmap lmic_pins = {
     .dio = {4, 5, 7},
 };
 
+/*
+ * We don't need every case in the following Method, but since it is only 
+ * commented, it will not be tranferred to the arduino.
+ */
 void onEvent (ev_t ev) {
 
     switch(ev) {
@@ -161,22 +164,18 @@ void onEvent (ev_t ev) {
     }
 }
 
+/*
+ * This is the send method. Here we set the data to be the number of walker and cyclists.
+ * After it sent the data, it will reset the count of walker & cyclist to 0.
+ */
 void do_send(osjob_t* j){
 
-  //STARTED TESTING HEEEEERE!!!!
-
-  /*
-   * you need to create an int array of for example the integer 'walker'.
-   * 
-   */
-
-   
     mydata[0] = walker;
     mydata[2] = cyclist;
     //END TESTING HEEEEEEERE!!!!
 
      if (LMIC.opmode & OP_TXRXPEND) {
-      //  Serial.println(F("OP_TXRXPEND, not sending"));
+        //Serial.println(F("OP_TXRXPEND, not sending"));
     } else {
         // Prepare upstream data transmission at the next possible time.
         LMIC_setTxData2(1, mydata, sizeof(mydata)-1, 0);
@@ -187,6 +186,11 @@ void do_send(osjob_t* j){
     
 
 }
+
+/*
+ * CheckIObject will check if it is a Person or not. If the speed is high enough, it
+ * will reset the sleeptimer.
+ */
 void CheckObject(float speed) {
 
     if (speed >= 0.5f && samePerson) {
@@ -219,10 +223,16 @@ void CheckObject(float speed) {
     }
 }
 
+/*
+ * This method can be removed if the product is going to be used for production.
+ * This is only for outputting information about speed, count of people and the
+ * state of the PIRs.
+ * This method was also used for the Demonstation using ProcessingIDE.
+ */
 void OutputResults(float nspeed) {
 
   /*
-   * Demonstration output
+   * Demonstration output (send data to ProcessingIDE)
   for (int i = 0; i < 5; i++) {
     Serial.println((String)nspeed + ';' + (String)walker + ';' + (String)cyclist);
   }
@@ -241,27 +251,31 @@ void OutputResults(float nspeed) {
   
 }
 
+/*
+ * This method will initiate the sleepmode. After the sleepPinInterrupt()
+ * it will fall asleep and will only wake up after one of the PIRs detected movement
+ * and send a high signal.
+ */
 void ActivateDeepSleep() {
     
     sleep.pwrDownMode();
     sleep.sleepPinInterrupt(intPin, HIGH);
     
-    seconds = millis();
-    Serial.println(digitalRead(intPin));
-    
+    seconds = millis();     //reset seconds
 }
 
+/*
+ * This method checks if the amount of time exceeds the specified 10 seconds. If this is the case,
+ * it will trigger the ActivateDeepSleep() method. 
+ * It is also checking every time if the amount of people passed by exceeds the specified number, 
+ * in this case 20, to send the data using LoRaWAN.
+ */
 void CheckTimer() {
 
   long tmpSecs = millis();
   
   if (tmpSecs > (seconds + (10 * 1000))) {
-    Serial.println("Goodnight sweet prince");
-    //Serial.println(seconds);
-    delay(100);
-    
     ActivateDeepSleep();
-  
   }  
   else if (tmpSecs > (seconds + (0.5 * 1000)))
       samePerson = false;
@@ -283,6 +297,11 @@ void CheckTimer() {
   }
 }
 
+/*
+ * This method will determine if the detected person is a pedestrian or a cyclist.
+ * It will 'put' the counted people into the EEPROM to be stored even if the device is shut down.
+ * After this is done, it will use the debugging method 'OutputResult' to print the collected data we got.
+ */
 void DeterminePerson() {
     avgSpeed = avgSpeed / countOfDetection;
         
@@ -302,6 +321,10 @@ void DeterminePerson() {
     EEPROM.put(1, cyclist);
 }
 
+/*
+ * This is a standard method.
+ * Here it initializes the objects and variables if its turned on.
+ */
 void setup() {
     Serial.begin(9600);
     FreqMeasure.begin();
@@ -361,19 +384,15 @@ void setup() {
     // frequency and support for class B is spotty and untested, so this
     // frequency is not configured here.
     #endif
-
-  
-    
-   
-
-   
-    // Start job
-    //TODO: SENDING DATA do_send(&sendjob);
-    //do_send(&sendjob);
-    
-    //Serial.println("Test");
 }
 
+/*
+ * This is a standard method.
+ * Here it loops every cycle the code.
+ * We are checking if the radar is powered on and check if it detected speed using the different methods
+ * above. 
+ * Also the loop method is executing 'CheckTimer' every cycle to make sure how much time passed.
+ */
 void loop() {
     //os_runloop_once();
     
